@@ -16,7 +16,7 @@
     "flow-typed": "flow-typed"
   },
   "bin": {
-    "numbers": "dist/bin/gendiff.js"
+    "gendiff": "dist/bin/gendiff.js"
   },
   "files": [
     "dist"
