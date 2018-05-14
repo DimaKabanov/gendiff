@@ -7,7 +7,7 @@ install-flow-typed:
 	npm run flow-typed install
 
 start:
-	npm run babel-node -- src/bin/numbers.js
+	npm run babel-node -- src/bin/gendiff.js
 
 publish:
 	npm publish
