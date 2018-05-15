@@ -4,6 +4,12 @@
 [![Build Status](https://travis-ci.org/DimaKabanov/project-lvl2-s257.svg?branch=master)](https://travis-ci.org/DimaKabanov/project-lvl2-s257)
 [![jest](https://facebook.github.io/jest/img/jest-badge.svg)](https://github.com/facebook/jest)
 
+##Install
+
+```console
+npm install -g dk-gendiff
+```
+
 ## Setup
 
 ```console
