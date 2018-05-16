@@ -9,7 +9,7 @@ commander
   .option('-f, --format [type]', 'output format')
   .description('Compares two configuration files and shows a difference.')
   .action((firstConfig, secondConfig) => {
-    genDiff(firstConfig, secondConfig);
+    console.log(genDiff(firstConfig, secondConfig));
   });
 
 commander.parse(process.argv);
