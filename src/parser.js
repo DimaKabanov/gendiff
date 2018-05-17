@@ -1,3 +1,5 @@
+// @flow
+
 import yamlParse from 'js-yaml';
 
 const parsers = {
@@ -6,7 +8,7 @@ const parsers = {
   '.yml': yamlParse.safeLoad,
 };
 
-const getParser = (firstExp, secondExp) => (data) => {
+const getParser = (firstExp: string, secondExp: string) => (data) => {
   if (firstExp !== secondExp) {
     throw new Error('File formats must be the same');
   }
