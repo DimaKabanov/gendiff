@@ -1,40 +1,43 @@
 // @flow
 
 import fs from 'fs';
+import path from 'path';
 import _ from 'lodash';
+import getParser from './parser';
 
 const propertyActions = [
   {
-    status: 'deleted',
-    check: (firstObj, secondObj, key) => !_.has(secondObj, key),
-    getData: (firstObj, secondObj, key) => firstObj[key],
+    status: 'added',
+    check: ({ objBefore, key }) => !_.has(objBefore, key),
+    getData: ({ objAfter, key }) => objAfter[key],
   },
   {
-    status: 'added',
-    check: (firstObj, secondObj, key) => !_.has(firstObj, key),
-    getData: (firstObj, secondObj, key) => secondObj[key],
+    status: 'deleted',
+    check: ({ objAfter, key }) => !_.has(objAfter, key),
+    getData: ({ objBefore, key }) => objBefore[key],
   },
   {
     status: 'unchanged',
-    check: (firstObj, secondObj, key) => _.has(secondObj, key) && firstObj[key] === secondObj[key],
-    getData: (firstObj, secondObj, key) => firstObj[key],
+    check: ({ objBefore, objAfter, key }) => objBefore[key] === objAfter[key],
+    getData: ({ objBefore, key }) => objBefore[key],
   },
   {
     status: 'changed',
-    check: (firstObj, secondObj, key) => _.has(secondObj, key) && firstObj[key] !== secondObj[key],
-    getData: (firstObj, secondObj, key) => ({ newData: secondObj[key], oldData: firstObj[key] }),
+    check: ({ objBefore, objAfter, key }) => objBefore[key] !== objAfter[key],
+    getData: ({ objBefore, objAfter, key }) =>
+      ({ newData: objAfter[key], oldData: objBefore[key] }),
   },
 ];
 
-const getPropertyAction = (firstObj, secondObj, key) =>
-  _.find(propertyActions, ({ check }) => check(firstObj, secondObj, key));
+const getPropertyAction = (objBefore, objAfter, key) =>
+  _.find(propertyActions, ({ check }) => check({ objBefore, objAfter, key }));
 
 const createAst = (objBefore, objAfter) => {
   const uniqKeys = _.union(Object.keys(objBefore), Object.keys(objAfter));
 
   return uniqKeys.map((key) => {
     const { getData, status } = getPropertyAction(objBefore, objAfter, key);
-    const data = getData(objBefore, objAfter, key);
+    const data = getData({ objBefore, objAfter, key });
 
     return {
       name: key,
@@ -44,35 +47,41 @@ const createAst = (objBefore, objAfter) => {
   });
 };
 
-const renderString = (ast) => {
+const renderString = (ast): string => {
   const result = ast.map((obj) => {
     const { name, data, status } = obj;
 
     switch (status) {
       case 'unchanged':
-        return `    ${name}: ${data}\n`;
+        return `    ${name}: ${data}`;
       case 'deleted':
-        return `  - ${name}: ${data}\n`;
+        return `  - ${name}: ${data}`;
       case 'changed':
-        return `  - ${name}: ${data.oldData}\n  + ${name}: ${data.newData}\n`;
+        return `  - ${name}: ${data.oldData}\n  + ${name}: ${data.newData}`;
       case 'added':
-        return `  + ${name}: ${data}\n`;
+        return `  + ${name}: ${data}`;
       default:
         throw new Error(`Incorrect status '${status}'`);
     }
   });
 
-  return `{\n${result.join('')}}`;
+  return `{\n${result.join('\n')}\n}`;
 };
 
 const genDiff = (pathToFileBefore: string, pathToFileAfter: string): string => {
   const dataFileBefore = fs.readFileSync(pathToFileBefore, 'utf8');
   const dataFileAfter = fs.readFileSync(pathToFileAfter, 'utf8');
 
-  const objBefore = JSON.parse(dataFileBefore);
-  const objAfter = JSON.parse(dataFileAfter);
+  const extFileBefore = path.extname(pathToFileBefore);
+  const extFileAfter = path.extname(pathToFileAfter);
+
+  const parserData = getParser(extFileBefore, extFileAfter);
+
+  const objBefore = parserData(dataFileBefore);
+  const objAfter = parserData(dataFileAfter);
 
   const ast = createAst(objBefore, objAfter);
+
   return renderString(ast);
 };
 
