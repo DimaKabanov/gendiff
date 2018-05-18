@@ -9,23 +9,23 @@ const propertyActions = [
   {
     type: 'added',
     check: ({ objBefore, key }) => !_.has(objBefore, key),
-    getData: ({ objAfter, key }) => objAfter[key],
+    getValue: ({ objAfter, key }) => objAfter[key],
   },
   {
     type: 'deleted',
     check: ({ objAfter, key }) => !_.has(objAfter, key),
-    getData: ({ objBefore, key }) => objBefore[key],
+    getValue: ({ objBefore, key }) => objBefore[key],
   },
   {
     type: 'unchanged',
     check: ({ objBefore, objAfter, key }) => objBefore[key] === objAfter[key],
-    getData: ({ objBefore, key }) => objBefore[key],
+    getValue: ({ objBefore, key }) => objBefore[key],
   },
   {
     type: 'changed',
     check: ({ objBefore, objAfter, key }) => objBefore[key] !== objAfter[key],
-    getData: ({ objBefore, objAfter, key }) =>
-      ({ newData: objAfter[key], oldData: objBefore[key] }),
+    getValue: ({ objBefore, objAfter, key }) =>
+      ({ newValue: objAfter[key], oldValue: objBefore[key] }),
   },
 ];
 
@@ -36,12 +36,12 @@ const createAst = (objBefore, objAfter) => {
   const uniqKeys = _.union(Object.keys(objBefore), Object.keys(objAfter));
 
   return uniqKeys.map((key) => {
-    const { getData, type } = getPropertyAction(objBefore, objAfter, key);
-    const data = getData({ objBefore, objAfter, key });
+    const { getValue, type } = getPropertyAction(objBefore, objAfter, key);
+    const value = getValue({ objBefore, objAfter, key });
 
     return {
       name: key,
-      data,
+      value,
       type,
     };
   });
@@ -49,17 +49,17 @@ const createAst = (objBefore, objAfter) => {
 
 const renderString = (ast): string => {
   const result = ast.map((obj) => {
-    const { name, data, type } = obj;
+    const { name, value, type } = obj;
 
     switch (type) {
       case 'unchanged':
-        return `    ${name}: ${data}`;
+        return `    ${name}: ${value}`;
       case 'deleted':
-        return `  - ${name}: ${data}`;
+        return `  - ${name}: ${value}`;
       case 'changed':
-        return `  - ${name}: ${data.oldData}\n  + ${name}: ${data.newData}`;
+        return `  - ${name}: ${value.oldValue}\n  + ${name}: ${value.newValue}`;
       case 'added':
-        return `  + ${name}: ${data}`;
+        return `  + ${name}: ${value}`;
       default:
         throw new Error(`Incorrect type '${type}'`);
     }
