@@ -15,8 +15,8 @@ const getParser = (firstExp: string, secondExp: string) => (data) => {
     throw new Error('File formats must be the same');
   }
 
-  const parser = parsers[firstExp];
-  return parser(data);
+  const parseData = parsers[firstExp];
+  return parseData(data);
 };
 
 export default getParser;

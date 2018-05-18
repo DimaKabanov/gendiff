@@ -7,22 +7,22 @@ import getParser from './parser';
 
 const propertyActions = [
   {
-    status: 'added',
+    type: 'added',
     check: ({ objBefore, key }) => !_.has(objBefore, key),
     getData: ({ objAfter, key }) => objAfter[key],
   },
   {
-    status: 'deleted',
+    type: 'deleted',
     check: ({ objAfter, key }) => !_.has(objAfter, key),
     getData: ({ objBefore, key }) => objBefore[key],
   },
   {
-    status: 'unchanged',
+    type: 'unchanged',
     check: ({ objBefore, objAfter, key }) => objBefore[key] === objAfter[key],
     getData: ({ objBefore, key }) => objBefore[key],
   },
   {
-    status: 'changed',
+    type: 'changed',
     check: ({ objBefore, objAfter, key }) => objBefore[key] !== objAfter[key],
     getData: ({ objBefore, objAfter, key }) =>
       ({ newData: objAfter[key], oldData: objBefore[key] }),
@@ -36,22 +36,22 @@ const createAst = (objBefore, objAfter) => {
   const uniqKeys = _.union(Object.keys(objBefore), Object.keys(objAfter));
 
   return uniqKeys.map((key) => {
-    const { getData, status } = getPropertyAction(objBefore, objAfter, key);
+    const { getData, type } = getPropertyAction(objBefore, objAfter, key);
     const data = getData({ objBefore, objAfter, key });
 
     return {
       name: key,
       data,
-      status,
+      type,
     };
   });
 };
 
 const renderString = (ast): string => {
   const result = ast.map((obj) => {
-    const { name, data, status } = obj;
+    const { name, data, type } = obj;
 
-    switch (status) {
+    switch (type) {
       case 'unchanged':
         return `    ${name}: ${data}`;
       case 'deleted':
@@ -61,7 +61,7 @@ const renderString = (ast): string => {
       case 'added':
         return `  + ${name}: ${data}`;
       default:
-        throw new Error(`Incorrect status '${status}'`);
+        throw new Error(`Incorrect type '${type}'`);
     }
   });
 
