@@ -9,63 +9,100 @@ const propertyActions = [
   {
     type: 'added',
     check: ({ objBefore, key }) => !_.has(objBefore, key),
-    getData: ({ objAfter, key }) => objAfter[key],
+    getValue: ({ objAfter, key }) => objAfter[key],
   },
   {
     type: 'deleted',
     check: ({ objAfter, key }) => !_.has(objAfter, key),
-    getData: ({ objBefore, key }) => objBefore[key],
+    getValue: ({ objBefore, key }) => objBefore[key],
+  },
+  {
+    type: 'nested',
+    check: ({ objBefore, objAfter, key }) =>
+      _.isPlainObject(objBefore[key]) && _.isPlainObject(objAfter[key]),
+    getValue: () => '',
   },
   {
     type: 'unchanged',
     check: ({ objBefore, objAfter, key }) => objBefore[key] === objAfter[key],
-    getData: ({ objBefore, key }) => objBefore[key],
+    getValue: ({ objBefore, key }) => objBefore[key],
   },
   {
     type: 'changed',
     check: ({ objBefore, objAfter, key }) => objBefore[key] !== objAfter[key],
-    getData: ({ objBefore, objAfter, key }) =>
-      ({ newData: objAfter[key], oldData: objBefore[key] }),
+    getValue: ({ objBefore, objAfter, key }) =>
+      ({ newValue: objAfter[key], oldValue: objBefore[key] }),
   },
 ];
 
 const getPropertyAction = (objBefore, objAfter, key) =>
   _.find(propertyActions, ({ check }) => check({ objBefore, objAfter, key }));
 
-const createAst = (objBefore, objAfter) => {
+const createAst = (objBefore, objAfter, depth = 1) => {
   const uniqKeys = _.union(Object.keys(objBefore), Object.keys(objAfter));
 
   return uniqKeys.map((key) => {
-    const { getData, type } = getPropertyAction(objBefore, objAfter, key);
-    const data = getData({ objBefore, objAfter, key });
+    const { getValue, type } = getPropertyAction(objBefore, objAfter, key);
+
+    const value = getValue({ objBefore, objAfter, key });
+    const children = type === 'nested' ? [...createAst(objBefore[key], objAfter[key], depth + 1)] : [];
 
     return {
       name: key,
-      data,
+      value,
       type,
+      children,
+      depth,
     };
   });
 };
 
-const renderString = (ast): string => {
+const addIndent = (depth, sign = ' ') => {
+  const strIndent = `${' '.repeat(4 * depth)}`;
+  const arrIndent = strIndent.split('');
+  const indexToReplace = arrIndent.length - 2;
+  return arrIndent.map((item, index) => (index === indexToReplace ? sign : item)).join('');
+};
+
+const stringifyObj = (obj, depth) => {
+  if (!_.isPlainObject(obj)) {
+    return obj;
+  }
+
+  const result = Object.keys(obj).map(key => `${addIndent(depth + 1)}${key}: ${obj[key]}`);
+
+  return `{\n${result.join('\n')}\n${addIndent(depth)}}`;
+};
+
+const renderString = (ast, startDepth = 0): string => {
   const result = ast.map((obj) => {
-    const { name, data, type } = obj;
+    const {
+      name,
+      value,
+      type,
+      children,
+      depth,
+    } = obj;
+
+    const strValue = _.isPlainObject(value) ? stringifyObj(value, depth) : value;
 
     switch (type) {
-      case 'unchanged':
-        return `    ${name}: ${data}`;
-      case 'deleted':
-        return `  - ${name}: ${data}`;
-      case 'changed':
-        return `  - ${name}: ${data.oldData}\n  + ${name}: ${data.newData}`;
       case 'added':
-        return `  + ${name}: ${data}`;
+        return `${addIndent(depth, '+')}${name}: ${strValue}`;
+      case 'deleted':
+        return `${addIndent(depth, '-')}${name}: ${strValue}`;
+      case 'unchanged':
+        return `${addIndent(depth)}${name}: ${strValue}`;
+      case 'changed':
+        return `${addIndent(depth, '-')}${name}: ${stringifyObj(value.oldValue, depth)}\n${addIndent(depth, '+')}${name}: ${stringifyObj(value.newValue, depth)}`;
+      case 'nested':
+        return `${addIndent(depth)}${name}: ${renderString(children, depth)}`;
       default:
         throw new Error(`Incorrect type '${type}'`);
     }
   });
 
-  return `{\n${result.join('\n')}\n}`;
+  return `{\n${result.join('\n')}\n${addIndent(startDepth)}}`;
 };
 
 const genDiff = (pathToFileBefore: string, pathToFileAfter: string): string => {
