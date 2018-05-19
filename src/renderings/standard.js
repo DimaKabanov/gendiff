@@ -19,7 +19,7 @@ const stringifyObj = (obj, depth) => {
   return `{\n${result.join('\n')}\n${addIndent(depth)}}`;
 };
 
-const render = (ast, startDepth = 0): string => {
+const render = (ast: any, startDepth: number = 0): string => {
   const result = ast.map((obj) => {
     const { name, value, type, children, depth, } = obj; // eslint-disable-line
 
