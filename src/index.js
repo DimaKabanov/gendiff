@@ -9,29 +9,30 @@ const propertyActions = [
   {
     type: 'added',
     check: ({ objBefore, key }) => !_.has(objBefore, key),
-    getValue: ({ objAfter, key }) => objAfter[key],
+    extendNode: ({ objAfter, key, depth }) => ({ value: objAfter[key], depth }),
   },
   {
     type: 'deleted',
     check: ({ objAfter, key }) => !_.has(objAfter, key),
-    getValue: ({ objBefore, key }) => objBefore[key],
+    extendNode: ({ objBefore, key, depth }) => ({ value: objBefore[key], depth }),
   },
   {
     type: 'nested',
     check: ({ objBefore, objAfter, key }) =>
       _.isPlainObject(objBefore[key]) && _.isPlainObject(objAfter[key]),
-    getValue: () => '',
+    extendNode: ({ objBefore, objAfter, key, depth, createAst }) => // eslint-disable-line
+      ({ children: [...createAst(objBefore[key], objAfter[key], depth + 1)], depth }),
   },
   {
     type: 'unchanged',
     check: ({ objBefore, objAfter, key }) => objBefore[key] === objAfter[key],
-    getValue: ({ objBefore, key }) => objBefore[key],
+    extendNode: ({ objBefore, key, depth }) => ({ value: objBefore[key], depth }),
   },
   {
     type: 'changed',
     check: ({ objBefore, objAfter, key }) => objBefore[key] !== objAfter[key],
-    getValue: ({ objBefore, objAfter, key }) =>
-      ({ newValue: objAfter[key], oldValue: objBefore[key] }),
+    extendNode: ({ objBefore, objAfter, key, depth }) => // eslint-disable-line
+      ({ value: { newValue: objAfter[key], oldValue: objBefore[key] }, depth }),
   },
 ];
 
@@ -42,18 +43,9 @@ const createAst = (objBefore, objAfter, depth = 1) => {
   const uniqKeys = _.union(Object.keys(objBefore), Object.keys(objAfter));
 
   return uniqKeys.map((key) => {
-    const { getValue, type } = getPropertyAction(objBefore, objAfter, key);
+    const { extendNode, type } = getPropertyAction(objBefore, objAfter, key);
 
-    const value = getValue({ objBefore, objAfter, key });
-    const children = type === 'nested' ? [...createAst(objBefore[key], objAfter[key], depth + 1)] : [];
-
-    return {
-      name: key,
-      value,
-      type,
-      children,
-      depth,
-    };
+    return { ...extendNode({ objBefore, objAfter, key, depth, createAst }), name: key, type }; // eslint-disable-line
   });
 };
 
@@ -76,13 +68,7 @@ const stringifyObj = (obj, depth) => {
 
 const renderString = (ast, startDepth = 0): string => {
   const result = ast.map((obj) => {
-    const {
-      name,
-      value,
-      type,
-      children,
-      depth,
-    } = obj;
+    const { name, value, type, children, depth, } = obj; // eslint-disable-line
 
     const strValue = _.isPlainObject(value) ? stringifyObj(value, depth) : value;
 
