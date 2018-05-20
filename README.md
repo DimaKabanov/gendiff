@@ -1,8 +1,10 @@
-# difference calculator
+# gendiff
 
 [![Maintainability](https://api.codeclimate.com/v1/badges/e016b7cfa41c3b5b316a/maintainability)](https://codeclimate.com/github/DimaKabanov/project-lvl2-s257/maintainability)
 [![Build Status](https://travis-ci.org/DimaKabanov/project-lvl2-s257.svg?branch=master)](https://travis-ci.org/DimaKabanov/project-lvl2-s257)
 [![jest](https://facebook.github.io/jest/img/jest-badge.svg)](https://github.com/facebook/jest)
+
+Utility to find differences in configuration files.
 
 ## Install
 
@@ -90,5 +92,5 @@ Property 'group3' was added with complex value
 ```console
 $ gendiff --format json first-config.ini second-config.ini
 
-[{"type":"unchanged","key":"host","depth":1,"oldValue":"hexlet.io"},{"type":"changed","key":"timeout","depth":1,"oldValue":50,"newValue":20},{"type":"deleted","key":"proxy","depth":1,"oldValue":"123.234.53.22"},{"type":"added","key":"verbose","depth":1,"newValue":true}]
+[{"type":"nested","key":"common","depth":1,"children":[{"type":"unchanged","key":"setting1","depth":2,"oldValue":"Value 1"},{"type":"deleted","key":"setting2","depth":2,"oldValue":"200"},{"type":"changed","key":"setting3","depth":2,"oldValue":true,"newValue":{"key":"value"}},{"type":"nested","key":"setting6","depth":2,"children":[{"type":"unchanged","key":"key","depth":3,"oldValue":"value"},{"type":"added","key":"ops","depth":3,"newValue":"vops"}]},{"type":"added","key":"setting4","depth":2,"newValue":"blah blah"},{"type":"added","key":"setting5","depth":2,"newValue":{"key5":"value5"}}]},{"type":"nested","key":"group1","depth":1,"children":[{"type":"changed","key":"baz","depth":2,"oldValue":"bas","newValue":"bars"},{"type":"unchanged","key":"foo","depth":2,"oldValue":"bar"},{"type":"changed","key":"nest","depth":2,"oldValue":{"key":"value"},"newValue":"str"}]},{"type":"deleted","key":"group2","depth":1,"oldValue":{"abc":"12345"}},{"type":"added","key":"group3","depth":1,"newValue":{"fee":"100500"}}]
 ```
