@@ -1,6 +1,5 @@
 import fs from 'fs';
 import genDiff from '../src';
-import render from '../src/renderings/standard';
 
 const pathToOutput = '__tests__/__fixtures__/output/output';
 const pathToOutputNested = '__tests__/__fixtures__/output/outputNested';
@@ -22,19 +21,19 @@ const pathToAfterNestedIni = '__tests__/__fixtures__/ini/after-nested.ini';
 
 describe('Difference of flat structures', () => {
   test('check flat json', () => {
-    const actual = genDiff(pathToBeforeJson, pathToAfterJson, render);
+    const actual = genDiff(pathToBeforeJson, pathToAfterJson, 'standard');
     const expected = fs.readFileSync(pathToOutput, 'utf8');
     expect(actual).toBe(expected);
   });
 
   test('check flat yaml', () => {
-    const actual = genDiff(pathToBeforeYaml, pathToAfterYaml, render);
+    const actual = genDiff(pathToBeforeYaml, pathToAfterYaml, 'standard');
     const expected = fs.readFileSync(pathToOutput, 'utf8');
     expect(actual).toBe(expected);
   });
 
   test('check flat ini', () => {
-    const actual = genDiff(pathToBeforeIni, pathToAfterIni, render);
+    const actual = genDiff(pathToBeforeIni, pathToAfterIni, 'standard');
     const expected = fs.readFileSync(pathToOutput, 'utf8');
     expect(actual).toBe(expected);
   });
@@ -42,19 +41,19 @@ describe('Difference of flat structures', () => {
 
 describe('Difference of nested structures', () => {
   test('check nested json', () => {
-    const actual = genDiff(pathToBeforeNestedJson, pathToAfterNestedJson, render);
+    const actual = genDiff(pathToBeforeNestedJson, pathToAfterNestedJson, 'standard');
     const expected = fs.readFileSync(pathToOutputNested, 'utf8');
     expect(actual).toBe(expected);
   });
 
   test('check nested yaml', () => {
-    const actual = genDiff(pathToBeforeNestedYaml, pathToAfterNestedYaml, render);
+    const actual = genDiff(pathToBeforeNestedYaml, pathToAfterNestedYaml, 'standard');
     const expected = fs.readFileSync(pathToOutputNested, 'utf8');
     expect(actual).toBe(expected);
   });
 
   test('check nested ini', () => {
-    const actual = genDiff(pathToBeforeNestedIni, pathToAfterNestedIni, render);
+    const actual = genDiff(pathToBeforeNestedIni, pathToAfterNestedIni, 'standard');
     const expected = fs.readFileSync(pathToOutputNested, 'utf8');
     expect(actual).toBe(expected);
   });
