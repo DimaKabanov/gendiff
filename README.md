@@ -26,10 +26,10 @@ make test
 
 ## Supported format
 
-* .json
-* .yaml
-* .yml
-* .ini
+* [.json](https://github.com/DimaKabanov/project-lvl2-s257/tree/master/__tests__/__fixtures__/json)
+* [.yaml](https://github.com/DimaKabanov/project-lvl2-s257/tree/master/__tests__/__fixtures__/yaml)
+* [.yml](https://github.com/DimaKabanov/project-lvl2-s257/tree/master/__tests__/__fixtures__/yaml)
+* [.ini](https://github.com/DimaKabanov/project-lvl2-s257/tree/master/__tests__/__fixtures__/ini)
 
 ## Report generation
 
