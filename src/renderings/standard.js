@@ -18,7 +18,7 @@ const objToStr = (obj, depth) => {
 };
 
 const render = (ast: any, startDepth: number = 0): string => {
-  const result = _.flatten(ast).map((node) => {
+  const astToStr = (node: any): any => {
     const { key, itemObjBefore, itemObjAfter, type, children, depth } = node;
 
     switch (type) {
@@ -33,9 +33,9 @@ const render = (ast: any, startDepth: number = 0): string => {
       default:
         throw new Error(`Incorrect type '${type}'`);
     }
-  });
+  };
 
-  return `{\n${result.join('\n')}\n${addIndent(startDepth)}}`;
+  return `{\n${_.flatten(ast).map(astToStr).join('\n')}\n${addIndent(startDepth)}}`;
 };
 
 export default render;

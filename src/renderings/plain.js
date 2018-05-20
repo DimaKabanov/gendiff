@@ -10,17 +10,16 @@ const objToStr = (obj) => {
 };
 
 const render = (ast: any, path: any = []): string => {
-  const result = ast.map((node: any): any => {
+  const astToStr = (node: any): any => {
     if (_.isArray(node)) {
       const [{ key, itemObjBefore }, { itemObjAfter }] = node;
+
       return `Property '${[...path, key].join('.')}' was updated from ${objToStr(itemObjBefore)} to ${objToStr(itemObjAfter)}`;
     }
 
     const { key, itemObjAfter, type, children } = node;
 
     switch (type) {
-      case 'unchanged':
-        return '';
       case 'added':
         return `Property '${[...path, key].join('.')}' was added with ${objToStr(itemObjAfter)}`;
       case 'deleted':
@@ -30,9 +29,9 @@ const render = (ast: any, path: any = []): string => {
       default:
         throw new Error(`Incorrect type '${type}'`);
     }
-  });
+  };
 
-  return result.filter(item => item).join('\n');
+  return ast.filter(node => node.type !== 'unchanged').map(astToStr).join('\n');
 };
 
 export default render;
