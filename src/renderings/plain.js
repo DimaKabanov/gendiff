@@ -11,19 +11,15 @@ const objToStr = (obj) => {
 
 const render = (ast: any, path: any = []): string => {
   const astToStr = (node: any): any => {
-    if (_.isArray(node)) {
-      const [{ key, itemObjBefore }, { itemObjAfter }] = node;
-
-      return `Property '${[...path, key].join('.')}' was updated from ${objToStr(itemObjBefore)} to ${objToStr(itemObjAfter)}`;
-    }
-
-    const { key, itemObjAfter, type, children } = node;
+    const { type, key, oldValue, newValue, children } = node;
 
     switch (type) {
       case 'added':
-        return `Property '${[...path, key].join('.')}' was added with ${objToStr(itemObjAfter)}`;
+        return `Property '${[...path, key].join('.')}' was added with ${objToStr(newValue)}`;
       case 'deleted':
         return `Property '${[...path, key].join('.')}' was removed`;
+      case 'changed':
+        return `Property '${[...path, key].join('.')}' was updated from ${objToStr(oldValue)} to ${objToStr(newValue)}`;
       case 'nested':
         return render(children, [...path, key]);
       default:

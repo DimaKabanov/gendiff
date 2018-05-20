@@ -9,49 +9,45 @@ import getRender from './renderings';
 const propertyActions = [
   {
     type: 'added',
-    check: ({ itemObjBefore }) => !itemObjBefore,
-    buildNode: ({ type, key, itemObjAfter, depth }) => ({ type, key, itemObjAfter, depth }),
+    check: ({ nodeBefore }) => !nodeBefore,
+    extendNode: ({ nodeAfter }) => ({ newValue: nodeAfter }),
   },
   {
     type: 'deleted',
-    check: ({ itemObjAfter }) => !itemObjAfter,
-    buildNode: ({ type, key, itemObjBefore, depth }) => ({ type, key, itemObjBefore, depth }),
+    check: ({ nodeAfter }) => !nodeAfter,
+    extendNode: ({ nodeBefore }) => ({ oldValue: nodeBefore }),
   },
   {
     type: 'nested',
-    check: ({ itemObjBefore, itemObjAfter }) =>
-      _.isPlainObject(itemObjBefore) && _.isPlainObject(itemObjAfter),
-    buildNode: ({ type, key, itemObjBefore, itemObjAfter, depth, buildAst }) =>
-      ({ type, key, depth, children: buildAst(itemObjBefore, itemObjAfter, depth + 1) }),
+    check: ({ nodeBefore, nodeAfter }) => _.isPlainObject(nodeBefore) && _.isPlainObject(nodeAfter),
+    extendNode: ({ nodeBefore, nodeAfter, depth, buildAst }) =>
+      ({ children: buildAst(nodeBefore, nodeAfter, depth + 1) }),
   },
   {
     type: 'unchanged',
-    check: ({ itemObjBefore, itemObjAfter }) => itemObjBefore === itemObjAfter,
-    buildNode: ({ type, key, itemObjBefore, depth }) => ({ type, key, itemObjBefore, depth }),
+    check: ({ nodeBefore, nodeAfter }) => nodeBefore === nodeAfter,
+    extendNode: ({ nodeBefore }) => ({ oldValue: nodeBefore }),
   },
   {
-    check: ({ itemObjBefore, itemObjAfter }) => itemObjBefore !== itemObjAfter,
-    buildNode: ({ key, itemObjAfter, itemObjBefore, depth }) => {
-      const oldNode = { type: 'deleted', key, itemObjBefore, depth };
-      const newNode = { type: 'added', key, itemObjAfter, depth };
-      return [oldNode, newNode];
-    },
+    type: 'changed',
+    check: ({ nodeBefore, nodeAfter }) => nodeBefore !== nodeAfter,
+    extendNode: ({ nodeBefore, nodeAfter }) => ({ oldValue: nodeBefore, newValue: nodeAfter }),
   },
 ];
 
-const getPropertyAction = (itemObjBefore, itemObjAfter) =>
-  _.find(propertyActions, ({ check }) => check({ itemObjBefore, itemObjAfter }));
+const getPropertyAction = (nodeBefore, nodeAfter) =>
+  _.find(propertyActions, ({ check }) => check({ nodeBefore, nodeAfter }));
 
 const buildAst = (objBefore, objAfter, depth = 1) => {
   const uniqKeys = _.union(Object.keys(objBefore), Object.keys(objAfter));
 
   return uniqKeys.map((key) => {
-    const itemObjBefore = objBefore[key];
-    const itemObjAfter = objAfter[key];
+    const nodeBefore = objBefore[key];
+    const nodeAfter = objAfter[key];
 
-    const { type, buildNode } = getPropertyAction(itemObjBefore, itemObjAfter);
+    const { type, extendNode } = getPropertyAction(nodeBefore, nodeAfter);
 
-    return buildNode({ type, key, itemObjBefore, itemObjAfter, depth, buildAst });
+    return { type, key, depth, ...extendNode({ nodeBefore, nodeAfter, depth, buildAst }) };
   });
 };
 

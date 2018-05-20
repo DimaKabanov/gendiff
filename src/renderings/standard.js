@@ -19,15 +19,18 @@ const objToStr = (obj, depth) => {
 
 const render = (ast: any, startDepth: number = 0): string => {
   const astToStr = (node: any): any => {
-    const { key, itemObjBefore, itemObjAfter, type, children, depth } = node;
+    const { type, key, depth, oldValue, newValue, children } = node;
 
     switch (type) {
       case 'added':
-        return `${addIndent(depth, '+')}${key}: ${objToStr(itemObjAfter, depth)}`;
+        return `${addIndent(depth, '+')}${key}: ${objToStr(newValue, depth)}`;
       case 'deleted':
-        return `${addIndent(depth, '-')}${key}: ${objToStr(itemObjBefore, depth)}`;
+        return `${addIndent(depth, '-')}${key}: ${objToStr(oldValue, depth)}`;
       case 'unchanged':
-        return `${addIndent(depth)}${key}: ${objToStr(itemObjBefore, depth)}`;
+        return `${addIndent(depth)}${key}: ${objToStr(oldValue, depth)}`;
+      case 'changed':
+        return [`${addIndent(depth, '-')}${key}: ${objToStr(oldValue, depth)}`,
+          `${addIndent(depth, '+')}${key}: ${objToStr(newValue, depth)}`];
       case 'nested':
         return `${addIndent(depth)}${key}: ${render(children, depth)}`;
       default:
@@ -35,7 +38,7 @@ const render = (ast: any, startDepth: number = 0): string => {
     }
   };
 
-  return `{\n${_.flatten(ast).map(astToStr).join('\n')}\n${addIndent(startDepth)}}`;
+  return `{\n${_.flatten(ast.map(astToStr)).join('\n')}\n${addIndent(startDepth)}}`;
 };
 
 export default render;
