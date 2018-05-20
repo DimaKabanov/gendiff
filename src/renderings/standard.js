@@ -19,15 +19,15 @@ const objToStr = (obj, depth) => {
 
 const render = (ast: any, startDepth: number = 0): string => {
   const result = _.flatten(ast).map((node) => {
-    const { key, before, after, type, children, depth } = node;
+    const { key, itemObjBefore, itemObjAfter, type, children, depth } = node;
 
     switch (type) {
       case 'added':
-        return `${addIndent(depth, '+')}${key}: ${objToStr(after, depth)}`;
+        return `${addIndent(depth, '+')}${key}: ${objToStr(itemObjAfter, depth)}`;
       case 'deleted':
-        return `${addIndent(depth, '-')}${key}: ${objToStr(before, depth)}`;
+        return `${addIndent(depth, '-')}${key}: ${objToStr(itemObjBefore, depth)}`;
       case 'unchanged':
-        return `${addIndent(depth)}${key}: ${objToStr(before, depth)}`;
+        return `${addIndent(depth)}${key}: ${objToStr(itemObjBefore, depth)}`;
       case 'nested':
         return `${addIndent(depth)}${key}: ${render(children, depth)}`;
       default:
