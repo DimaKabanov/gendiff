@@ -9,33 +9,27 @@ const addIndent = (depth, sign = ' ') => {
   return arrIndent.map((item, index) => (index === indexToReplace ? sign : item)).join('');
 };
 
-const stringifyObj = (obj, depth) => {
+const objToStr = (obj, depth) => {
   if (!_.isPlainObject(obj)) {
     return obj;
   }
-
   const result = Object.keys(obj).map(key => `${addIndent(depth + 1)}${key}: ${obj[key]}`);
-
   return `{\n${result.join('\n')}\n${addIndent(depth)}}`;
 };
 
 const render = (ast: any, startDepth: number = 0): string => {
-  const result = ast.map((obj) => {
-    const { name, value, type, children, depth, } = obj; // eslint-disable-line
-
-    const strValue = _.isPlainObject(value) ? stringifyObj(value, depth) : value;
+  const result = _.flatten(ast).map((node) => {
+    const { key, before, after, type, children, depth } = node;
 
     switch (type) {
       case 'added':
-        return `${addIndent(depth, '+')}${name}: ${strValue}`;
+        return `${addIndent(depth, '+')}${key}: ${objToStr(after, depth)}`;
       case 'deleted':
-        return `${addIndent(depth, '-')}${name}: ${strValue}`;
+        return `${addIndent(depth, '-')}${key}: ${objToStr(before, depth)}`;
       case 'unchanged':
-        return `${addIndent(depth)}${name}: ${strValue}`;
-      case 'changed':
-        return `${addIndent(depth, '-')}${name}: ${stringifyObj(value.oldValue, depth)}\n${addIndent(depth, '+')}${name}: ${stringifyObj(value.newValue, depth)}`;
+        return `${addIndent(depth)}${key}: ${objToStr(before, depth)}`;
       case 'nested':
-        return `${addIndent(depth)}${name}: ${render(children, depth)}`;
+        return `${addIndent(depth)}${key}: ${render(children, depth)}`;
       default:
         throw new Error(`Incorrect type '${type}'`);
     }
