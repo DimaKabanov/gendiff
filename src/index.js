@@ -4,85 +4,70 @@ import fs from 'fs';
 import path from 'path';
 import _ from 'lodash';
 import getParser from './parser';
+import getRender from './renderings';
 
 const propertyActions = [
   {
     type: 'added',
-    check: ({ objBefore, key }) => !_.has(objBefore, key),
-    getValue: ({ objAfter, key }) => objAfter[key],
+    check: ({ nodeBefore }) => !nodeBefore,
+    extendNode: ({ nodeAfter }) => ({ newValue: nodeAfter }),
   },
   {
     type: 'deleted',
-    check: ({ objAfter, key }) => !_.has(objAfter, key),
-    getValue: ({ objBefore, key }) => objBefore[key],
+    check: ({ nodeAfter }) => !nodeAfter,
+    extendNode: ({ nodeBefore }) => ({ oldValue: nodeBefore }),
+  },
+  {
+    type: 'nested',
+    check: ({ nodeBefore, nodeAfter }) => _.isPlainObject(nodeBefore) && _.isPlainObject(nodeAfter),
+    extendNode: ({ nodeBefore, nodeAfter, depth, buildAst }) =>
+      ({ children: buildAst(nodeBefore, nodeAfter, depth + 1) }),
   },
   {
     type: 'unchanged',
-    check: ({ objBefore, objAfter, key }) => objBefore[key] === objAfter[key],
-    getValue: ({ objBefore, key }) => objBefore[key],
+    check: ({ nodeBefore, nodeAfter }) => nodeBefore === nodeAfter,
+    extendNode: ({ nodeBefore }) => ({ oldValue: nodeBefore }),
   },
   {
     type: 'changed',
-    check: ({ objBefore, objAfter, key }) => objBefore[key] !== objAfter[key],
-    getValue: ({ objBefore, objAfter, key }) =>
-      ({ newValue: objAfter[key], oldValue: objBefore[key] }),
+    check: ({ nodeBefore, nodeAfter }) => nodeBefore !== nodeAfter,
+    extendNode: ({ nodeBefore, nodeAfter }) => ({ oldValue: nodeBefore, newValue: nodeAfter }),
   },
 ];
 
-const getPropertyAction = (objBefore, objAfter, key) =>
-  _.find(propertyActions, ({ check }) => check({ objBefore, objAfter, key }));
+const getPropertyAction = (nodeBefore, nodeAfter) =>
+  _.find(propertyActions, ({ check }) => check({ nodeBefore, nodeAfter }));
 
-const createAst = (objBefore, objAfter) => {
+const buildAst = (objBefore, objAfter, depth = 1) => {
   const uniqKeys = _.union(Object.keys(objBefore), Object.keys(objAfter));
 
   return uniqKeys.map((key) => {
-    const { getValue, type } = getPropertyAction(objBefore, objAfter, key);
-    const value = getValue({ objBefore, objAfter, key });
+    const nodeBefore = objBefore[key];
+    const nodeAfter = objAfter[key];
 
-    return {
-      name: key,
-      value,
-      type,
-    };
+    const { type, extendNode } = getPropertyAction(nodeBefore, nodeAfter);
+
+    return { type, key, depth, ...extendNode({ nodeBefore, nodeAfter, depth, buildAst }) };
   });
 };
 
-const renderString = (ast): string => {
-  const result = ast.map((obj) => {
-    const { name, value, type } = obj;
-
-    switch (type) {
-      case 'unchanged':
-        return `    ${name}: ${value}`;
-      case 'deleted':
-        return `  - ${name}: ${value}`;
-      case 'changed':
-        return `  - ${name}: ${value.oldValue}\n  + ${name}: ${value.newValue}`;
-      case 'added':
-        return `  + ${name}: ${value}`;
-      default:
-        throw new Error(`Incorrect type '${type}'`);
-    }
-  });
-
-  return `{\n${result.join('\n')}\n}`;
-};
-
-const genDiff = (pathToFileBefore: string, pathToFileAfter: string): string => {
+const genDiff = (pathToFileBefore: string, pathToFileAfter: string, format: string): string => {
   const dataFileBefore = fs.readFileSync(pathToFileBefore, 'utf8');
   const dataFileAfter = fs.readFileSync(pathToFileAfter, 'utf8');
 
   const extFileBefore = path.extname(pathToFileBefore);
   const extFileAfter = path.extname(pathToFileAfter);
 
-  const parserData = getParser(extFileBefore, extFileAfter);
+  const getParseredData = getParser(extFileBefore, extFileAfter);
 
-  const objBefore = parserData(dataFileBefore);
-  const objAfter = parserData(dataFileAfter);
+  const objBefore = getParseredData(dataFileBefore);
+  const objAfter = getParseredData(dataFileAfter);
 
-  const ast = createAst(objBefore, objAfter);
+  const ast = buildAst(objBefore, objAfter);
 
-  return renderString(ast);
+  const getRenderedData = getRender(format);
+
+  return getRenderedData(ast);
 };
 
 export default genDiff;
