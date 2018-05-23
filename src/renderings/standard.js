@@ -3,7 +3,8 @@
 import _ from 'lodash';
 
 const addIndent = (depth, sign = ' ') => {
-  const strIndent = `${' '.repeat(4 * depth)}`;
+  const tabSize = 4;
+  const strIndent = `${' '.repeat(depth * tabSize)}`;
   const arrIndent = strIndent.split('');
   const indexToReplace = arrIndent.length - 2;
   return arrIndent.map((item, index) => (index === indexToReplace ? sign : item)).join('');
