@@ -1,7 +1,7 @@
 # gendiff
 
 [![Maintainability](https://api.codeclimate.com/v1/badges/e016b7cfa41c3b5b316a/maintainability)](https://codeclimate.com/github/DimaKabanov/project-lvl2-s257/maintainability)
-[![Build Status](https://travis-ci.org/DimaKabanov/project-lvl2-s257.svg?branch=master)](https://travis-ci.org/DimaKabanov/project-lvl2-s257)
+[![Build Status](https://travis-ci.org/DimaKabanov/gendiff.svg?branch=master)](https://travis-ci.org/DimaKabanov/gendiff)
 [![jest](https://facebook.github.io/jest/img/jest-badge.svg)](https://github.com/facebook/jest)
 
 Utility to find differences in configuration files.
