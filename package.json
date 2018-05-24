@@ -22,7 +22,8 @@
     "dist"
   ],
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "testPathIgnorePatterns": ["renderPath"]
   },
   "author": "Dmitry Kabanov",
   "license": "ISC",
